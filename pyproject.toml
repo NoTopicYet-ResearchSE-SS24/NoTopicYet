@@ -3,7 +3,8 @@ name = "notopicyet"
 version = "0.1.0"
 description = "Add your description here"
 authors = [
-    { name = "iron3oxide", email = "hello@iron3oxi.de" }
+    { name = "iron3oxide", email = "hello@iron3oxi.de" },
+    { name = "HokageM", email = "m.trzaska663@gmail.com"}
 ]
 dependencies = []
 readme = "README.md"
