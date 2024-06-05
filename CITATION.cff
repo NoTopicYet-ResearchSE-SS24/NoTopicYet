@@ -1,0 +1,26 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: HeartPredict
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Vallentin
+    family-names: Boehm
+  - given-names: Jason
+    family-names: Hottelet
+  - given-names: Mike
+    family-names: Trzaska
+identifiers:
+  - type: url
+    value: 'https://github.com/HeartPredict/HeartPredict'
+repository-code: 'https://github.com/HeartPredict/HeartPredict'
+abstract: >
+  HeartPredict is a Python library designed to analyze and
+  predict heart failure outcomes using patient data.
+license: MIT
+version: 0.1.0
+date-released: '2023-06-06'
