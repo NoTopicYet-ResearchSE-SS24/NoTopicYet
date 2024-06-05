@@ -1,7 +1,7 @@
 [project]
-name = "notopicyet"
+name = "heartpredict"
 version = "0.1.0"
-description = "Add your description here"
+description = "HeartPredict is a Python library designed to analyze and predict heart failure outcomes using patient data."
 authors = [
     { name = "iron3oxide", email = "hello@iron3oxi.de" },
     { name = "HokageM", email = "m.trzaska663@gmail.com"}

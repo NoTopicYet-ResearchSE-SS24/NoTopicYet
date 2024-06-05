@@ -1,1 +1,31 @@
-# NoTopicYet
+# HeartPredict
+
+<img src="logo/logo.png" width="300">
+
+HeartPredict is a Python library designed to analyze and predict heart failure outcomes using patient data.
+
+# Key Questions to Answer with the Dataset
+
+## Descriptive Analysis:
+- What are the basic statistics (mean, median, standard deviation) of the clinical features?
+- How is the age distribution of patients?
+- What is the proportion of patients with conditions like anaemia, diabetes, and high blood pressure?
+
+## Correlation and Feature Importance:
+- Which clinical features are most strongly correlated with the DEATH_EVENT? And what are the most important features for predicting heart failure outcomes?
+- How do different clinical features contribute to the risk of death due to heart failure?
+
+## Predictive Analysis:
+- How accurately can we predict DEATH_EVENT using clinical features?
+- Which machine learning model performs best for this prediction task? (We can use DecisionTrees, RandomForest or other classifiers) Let us use scikit-learn
+- How do different models compare in terms of accuracy, precision, recall, and other metrics?
+
+## Survival Analysis:
+- What is the survival rate of patients over the follow-up period?
+- How do survival rates vary with different clinical features (e.g., age, ejection fraction)?
+- Can we identify patient subgroups with higher or lower survival probabilities?
+
+## Risk Factor Analysis:
+- How does smoking affect the risk of death in heart failure patients?
+- What is the impact of serum creatinine and serum sodium levels on patient outcomes?
+- How does the combination of multiple risk factors affect the likelihood of heart failure-related death?
