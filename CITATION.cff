@@ -8,7 +8,7 @@ message: >-
   metadata from this file.
 type: software
 authors:
-  - given-names: Vallentin
+  - given-names: Valentin
     family-names: Boehm
   - given-names: Jason
     family-names: Hottelet
