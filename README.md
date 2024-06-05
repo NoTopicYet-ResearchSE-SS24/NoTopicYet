@@ -29,3 +29,15 @@ HeartPredict is a Python library designed to analyze and predict heart failure o
 - How does smoking affect the risk of death in heart failure patients?
 - What is the impact of serum creatinine and serum sodium levels on patient outcomes?
 - How does the combination of multiple risk factors affect the likelihood of heart failure-related death?
+
+# Contributing
+
+We welcome contributions from the community! If you're interested in contributing to HeartPredict, please take a look at our [CONTRIBUTING.md](CONTRIBUTING.md) file. It contains all the guidelines you need to follow to get started, including how to report issues, suggest features, and submit code.
+
+# Code of Conduct
+
+We are committed to providing a friendly, safe, and welcoming environment for everyone. Please read our [Code of Conduct](CONDUCT.md) to understand the standards we expect all members of our community to adhere to.
+
+# License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
