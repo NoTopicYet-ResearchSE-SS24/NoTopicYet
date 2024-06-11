@@ -4,14 +4,17 @@ version = "0.1.0"
 description = "HeartPredict is a Python library designed to analyze and predict heart failure outcomes using patient data."
 authors = [
     { name = "iron3oxide", email = "hello@iron3oxi.de" },
-    { name = "HokageM", email = "m.trzaska663@gmail.com"}
+    { name = "HokageM", email = "m.trzaska663@gmail.com" },
+    { name = "valbo451", email = "valentin.boehm@studium.uni-hamburg.de" }
 ]
-dependencies = []
+dependencies = [
+    "typer>=0.12.3",
+]
 readme = "README.md"
 requires-python = ">= 3.8"
 
 [project.scripts]
-no_topic_yet = "notopicyet.main:run"
+hp = "heartpredict.main:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -25,4 +28,4 @@ dev-dependencies = []
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/notopicyet"]
+packages = ["src/heartpredict"]
