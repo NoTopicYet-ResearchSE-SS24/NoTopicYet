@@ -1,6 +1,6 @@
 # HeartPredict
 
-<img src="logo/logo.png" width="300" alt="logo">
+![logo](/logo/logo.png)
 
 HeartPredict is a Python library designed to analyze
 and predict heart failure outcomes using patient data.
