@@ -9,10 +9,7 @@ and predict heart failure outcomes using patient data.
 
 The dataset used for this analysis was obtained from kaggle.com.
 It contains 5000 medical records of patients who had heart-failure
-and is licensed under CC0; made available under [this URL]
-(<https://www.kaggle.com/datasets/aadarshvelu/>
-heart-failure-prediction-clinical-records?
-select=heart_failure_clinical_records.csv).
+and is licensed under CC0; made available under [this URL](https://www.kaggle.com/datasets/aadarshvelu/heart-failure-prediction-clinical-recordsselect=heart_failure_clinical_records.csv).
 
 ## Key Questions to Answer with the Dataset
 
