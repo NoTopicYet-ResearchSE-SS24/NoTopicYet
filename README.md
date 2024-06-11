@@ -4,6 +4,9 @@
 
 HeartPredict is a Python library designed to analyze and predict heart failure outcomes using patient data.
 
+# Dataset information
+The dataset used for this analysis was obtained from kaggle.com. The dataset contains 5000 medical records of patients who had heart-failure. It is licensed under CC0 and available under the URL https://www.kaggle.com/datasets/aadarshvelu/heart-failure-prediction-clinical-records?select=heart_failure_clinical_records.csv 
+
 # Key Questions to Answer with the Dataset
 
 ## Descriptive Analysis:
