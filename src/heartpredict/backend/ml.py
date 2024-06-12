@@ -23,7 +23,7 @@ def prepare_train_test_data(x, y):
     return x_train, x_test, y_train, y_test
 
 
-def scale_input_features(scaler=StandardScaler(), x_train, x_test):
+def scale_input_features(x_train, x_test, scaler=StandardScaler()):
     """
     Scale the input features.
     Args:
