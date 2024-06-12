@@ -1,5 +1,4 @@
 import numpy as np
-from joblib import Parallel, delayed
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
 from sklearn.preprocessing import StandardScaler
@@ -71,9 +70,7 @@ def train_w_best_hyperparam(classifier_hyper, x, y):
     """
     classifier, hyperparam_name, hyperparam_values = classifier_hyper
 
-    accuracies = Parallel(n_jobs=-1)(
-        delayed(classifier)(classifier, x, y, hyperparam_name, value) for value in hyperparam_values
-    )
+    accuracies = [k_fold_cross_validation(classifier, x, y, hyperparam_name, value) for value in hyperparam_values]
 
     best_hyperparam_value = hyperparam_values[np.argmax(accuracies)]
     classifier.set_params(**{hyperparam_name: best_hyperparam_value})
