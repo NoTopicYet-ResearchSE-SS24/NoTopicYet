@@ -1,16 +1,17 @@
+from functools import lru_cache
 import pandas as pd
+import pathlib
 
 
-def load_data_csv(file_path):
+@lru_cache
+def load_data_csv():
     """
-    Load the data from the file.
-    Args:
-        file_path:
-
+    Load the data from the csv file.
     Returns:
 
     """
-    data = pd.read_csv(file_path)
+    project_path = pathlib.Path(__file__).resolve().parent.parent.parent.parent
+    data = pd.read_csv(project_path / "data/hear_failure_clinical_records_dataset.csv")
 
     x = data.drop(columns=['DEATH_EVENT'])
     y = data['DEATH_EVENT']
