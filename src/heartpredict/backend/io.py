@@ -4,17 +4,28 @@ import pathlib
 
 
 @lru_cache
-def load_data_csv():
+def get_data_frame():
     """
-    Load the data from the csv file.
+    Get the data frame.
     Returns:
 
     """
     project_path = pathlib.Path(__file__).resolve().parent.parent.parent.parent
     data = pd.read_csv(project_path / "data/hear_failure_clinical_records_dataset.csv")
+    return data
 
-    x = data.drop(columns=['DEATH_EVENT'])
-    y = data['DEATH_EVENT']
+
+@lru_cache
+def get_ml_matrices():
+    """
+    Load the data from the csv file.
+    Returns:
+
+    """
+    df = get_data_frame()
+
+    x = df.drop(columns=['DEATH_EVENT'])
+    y = df['DEATH_EVENT']
 
     x_matrix = x.values
     y_matrix = y.values
