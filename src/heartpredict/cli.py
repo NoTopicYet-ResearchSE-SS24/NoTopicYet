@@ -4,7 +4,6 @@ from heartpredict.backend.ml import prepare_train_test_data, classification_for_
 import importlib.metadata
 
 import typer
-import joblib
 
 app = typer.Typer(no_args_is_help=True)
 
