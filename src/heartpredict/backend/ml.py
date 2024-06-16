@@ -1,4 +1,6 @@
+import joblib
 import numpy as np
+from pathlib import Path
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
 from sklearn.preprocessing import StandardScaler
@@ -6,6 +8,8 @@ from sklearn.metrics import accuracy_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import cross_val_score, train_test_split
+
+RANDOM_SEED = 42
 
 
 def prepare_train_test_data(x, y):
@@ -18,7 +22,8 @@ def prepare_train_test_data(x, y):
     Returns:
 
     """
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=RANDOM_SEED)
+    x_train, x_test = scale_input_features(x_train, x_test)
     return x_train, x_test, y_train, y_test
 
 
@@ -33,6 +38,7 @@ def scale_input_features(x_train, x_test, scaler=StandardScaler()):
     Returns:
 
     """
+    scaler = StandardScaler()
     x_train = scaler.fit_transform(x_train)
     x_test = scaler.transform(x_test)
     return x_train, x_test
@@ -54,7 +60,7 @@ def k_fold_cross_validation(classifier, x, y, hyperparam_name, value):
     if hyperparam_name:
         classifier.set_params(**{hyperparam_name: value})
     accuracy = cross_val_score(classifier, x, y)
-    return accuracy
+    return accuracy.mean()
 
 
 def train_w_best_hyperparam(classifier_hyper, x, y):
@@ -70,10 +76,12 @@ def train_w_best_hyperparam(classifier_hyper, x, y):
     """
     classifier, hyperparam_name, hyperparam_values = classifier_hyper
 
-    accuracies = [k_fold_cross_validation(classifier, x, y, hyperparam_name, value) for value in hyperparam_values]
+    best_hyperparam_value = None
+    if hyperparam_name:
+        accuracies = [k_fold_cross_validation(classifier, x, y, hyperparam_name, value) for value in hyperparam_values]
+        best_hyperparam_value = hyperparam_values[np.argmax(accuracies)]
+        classifier.set_params(**{hyperparam_name: best_hyperparam_value})
 
-    best_hyperparam_value = hyperparam_values[np.argmax(accuracies)]
-    classifier.set_params(**{hyperparam_name: best_hyperparam_value})
     classifier.fit(x, y)
     return classifier, hyperparam_name, best_hyperparam_value
 
@@ -91,16 +99,21 @@ def train_classification(classifier_hyper, x_train, y_train, x_test, y_test):
     Returns:
 
     """
-    x_train, x_test = scale_input_features(StandardScaler(), x_train, x_test)
+    x_train, x_test = scale_input_features(x_train, x_test, StandardScaler())
 
-    classifier, hyperparam, hyperparam_value = train_w_best_hyperparam(classifier_hyper, x_train, y_train, x_test,
-                                                                       y_test)
-    classifier.fit(x_train, y_train)
-    y_pred = classifier.predict(x_test)
+    model, hyperparam, best_hyperparam_value = train_w_best_hyperparam(classifier_hyper, x_train, y_train)
+
+    y_pred = model.predict(x_test)
     acc = accuracy_score(y_test, y_pred)
-    print(f'Best Model for {type(classifier).__name__} with {hyperparam}={hyperparam_value}, '
-          f'Classes: {classifier.classes_}: Accuracy Score: {acc}')
-    return classifier, acc
+    print(f'Best Model for {type(model).__name__} with {hyperparam}={best_hyperparam_value}, '
+          f'Classes: {model.classes_}: Accuracy Score: {acc}')
+
+    # Save the trained model
+    output_dir = Path("results/trained_models")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    model_file = output_dir / f"{type(model).__name__}_model.joblib"
+    joblib.dump(model, model_file, compress=False)
+    return model, acc, model_file
 
 
 def classification_for_different_classifiers(x_train, y_train, x_test, y_test):
@@ -113,23 +126,36 @@ def classification_for_different_classifiers(x_train, y_train, x_test, y_test):
         y_test:
 
     Returns:
-        Best performed model.
+        Path to best performed model.
     """
     classifiers_hyper = [
-        (DecisionTreeClassifier(), "max_depth", range(1, 12)),
-        (RandomForestClassifier(), "max_depth", range(1, 12)),
+        (DecisionTreeClassifier(random_state=RANDOM_SEED), "max_depth", range(1, 12)),
+        (RandomForestClassifier(random_state=RANDOM_SEED), "max_depth", range(1, 12)),
         (KNeighborsClassifier(), "n_neighbors", range(3, 7)),
         (LinearDiscriminantAnalysis(), None, None),
         (QuadraticDiscriminantAnalysis(), None, None)
     ]
 
     # TODO: Use different / combined evaluation metrics
-    models_scores = []
+    # TODO: Evaluation based only based on accuracy score leads to overfitting.
+    training_results = []  # List of tuples (classifier, accuracy_score, path_to_model)
     for classifier_hyper in classifiers_hyper:
-        models_scores.append(train_classification(classifier_hyper, x_train, y_train, x_test, y_test))
+        training_results.append(train_classification(classifier_hyper, x_train, y_train, x_test, y_test))
 
-    accuracy_scores = [score for _, score in models_scores]
+    accuracy_scores = [score for _, score, _ in training_results]
     best_performance = np.argmax(accuracy_scores)
     print(f'Best Model: {type(classifiers_hyper[best_performance][0]).__name__} with Accuracy Score: '
-          f'{models_scores[best_performance][1]}')
-    return models_scores[best_performance][0]
+          f'{training_results[best_performance][1]}')
+    return training_results[best_performance][1], training_results[best_performance][2]
+
+
+def load_model(model_file):
+    """
+    Load the trained model.
+    Args:
+        model_file:
+
+    Returns:
+
+    """
+    return joblib.load(model_file)
