@@ -26,7 +26,7 @@ def train_model_for_classification(csv: str = "data/heart_failure_clinical_recor
     score, path_to_best_model = classification_for_different_classifiers(x_train, y_train, x_test, y_test)
 
     # TODO: move this to pytest
-    model = joblib.load(path_to_best_model)
+    model = load_model(path_to_best_model)
     print(f"Model loaded from {path_to_best_model}")
     print(f"Verify Performance of Best model: {model.score(x_test, y_test)}")
     assert score == model.score(x_test, y_test)
