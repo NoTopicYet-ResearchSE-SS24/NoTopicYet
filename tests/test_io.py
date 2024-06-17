@@ -4,7 +4,7 @@ from heartpredict.backend.io import get_ml_matrices
 
 
 def test_get_ml_matrices():
-    x, y = get_ml_matrices("../data/heart_failure_clinical_records.csv")
+    x, y = get_ml_matrices("data/heart_failure_clinical_records.csv")
     assert x.shape == (5000, 12)
     assert y.shape == (5000,)
 
