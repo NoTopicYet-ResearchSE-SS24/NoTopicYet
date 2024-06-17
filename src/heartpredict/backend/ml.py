@@ -56,7 +56,7 @@ def scale_input_features(x_train, x_test):
     # Save the fitted scaler needed for prediction of new data.
     output_dir = Path("results/scalers")
     output_dir.mkdir(parents=True, exist_ok=True)
-    scaler_file = output_dir / f"used_scaler.joblib"
+    scaler_file = output_dir / "used_scaler.joblib"
     joblib.dump(scaler, scaler_file, compress=False)
 
     x_test = scaler.transform(x_test)
