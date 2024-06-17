@@ -1,5 +1,6 @@
 from heartpredict.backend.io import get_ml_matrices
-from heartpredict.backend.ml import prepare_train_test_data, classification_for_different_classifiers, set_random_seed
+from heartpredict.backend.ml import (prepare_train_test_data, classification_for_different_classifiers,
+                                     set_random_seed, scale_input_features)
 
 import importlib.metadata
 
