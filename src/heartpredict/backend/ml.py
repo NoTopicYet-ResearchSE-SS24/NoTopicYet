@@ -12,6 +12,19 @@ from sklearn.model_selection import cross_val_score, train_test_split
 RANDOM_SEED = 42
 
 
+def set_random_seed(seed):
+    """
+    Set the random seed.
+    Args:
+        seed:
+
+    Returns:
+
+    """
+    global RANDOM_SEED
+    RANDOM_SEED = seed
+
+
 def prepare_train_test_data(x, y):
     """
     Prepare the train and test data.
@@ -27,11 +40,10 @@ def prepare_train_test_data(x, y):
     return x_train, x_test, y_train, y_test
 
 
-def scale_input_features(x_train, x_test, scaler=StandardScaler()):
+def scale_input_features(x_train, x_test):
     """
     Scale the input features.
     Args:
-        scaler:
         x_train:
         x_test:
 
@@ -99,8 +111,6 @@ def train_classification(classifier_hyper, x_train, y_train, x_test, y_test):
     Returns:
 
     """
-    x_train, x_test = scale_input_features(x_train, x_test, StandardScaler())
-
     model, hyperparam, best_hyperparam_value = train_w_best_hyperparam(classifier_hyper, x_train, y_train)
 
     y_pred = model.predict(x_test)
@@ -111,7 +121,7 @@ def train_classification(classifier_hyper, x_train, y_train, x_test, y_test):
     # Save the trained model
     output_dir = Path("results/trained_models")
     output_dir.mkdir(parents=True, exist_ok=True)
-    model_file = output_dir / f"{type(model).__name__}_model.joblib"
+    model_file = output_dir / f"{type(model).__name__}_model_{RANDOM_SEED}.joblib"
     joblib.dump(model, model_file, compress=False)
     return model, acc, model_file
 
@@ -126,7 +136,7 @@ def classification_for_different_classifiers(x_train, y_train, x_test, y_test):
         y_test:
 
     Returns:
-        Path to best performed model.
+        Path to best performed model and its accuracy score.
     """
     classifiers_hyper = [
         (DecisionTreeClassifier(random_state=RANDOM_SEED), "max_depth", range(1, 12)),
@@ -146,7 +156,7 @@ def classification_for_different_classifiers(x_train, y_train, x_test, y_test):
     best_performance = np.argmax(accuracy_scores)
     print(f'Best Model: {type(classifiers_hyper[best_performance][0]).__name__} with Accuracy Score: '
           f'{training_results[best_performance][1]}')
-    return training_results[best_performance][1], training_results[best_performance][2]
+    return training_results[best_performance][2], training_results[best_performance][1]
 
 
 def load_model(model_file):
@@ -156,6 +166,6 @@ def load_model(model_file):
         model_file:
 
     Returns:
-
+        Loaded model.
     """
     return joblib.load(model_file)
