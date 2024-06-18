@@ -7,7 +7,7 @@ def get_data_frame(csv_file_path: str = "data/heart_failure_clinical_records_dat
     """
     Get the data frame.
     Returns:
-
+        Data frame.
     """
     data = pd.read_csv(csv_file_path)
     return data
@@ -18,7 +18,7 @@ def get_ml_matrices(csv_file_path: str = "data/heart_failure_clinical_records_da
     """
     Load the data from the csv file.
     Returns:
-
+        Feature and target matrices.
     """
     df = get_data_frame(csv_file_path)
 

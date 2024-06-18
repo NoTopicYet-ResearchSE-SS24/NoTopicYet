@@ -1,5 +1,5 @@
 from heartpredict.backend.io import get_ml_matrices
-from heartpredict.backend.ml import prepare_train_test_data, classification_for_different_classifiers, set_random_seed
+from heartpredict.backend.ml import prepare_train_valid_data, classification_for_different_classifiers, set_random_seed
 
 import importlib.metadata
 
@@ -27,5 +27,5 @@ def train_model_for_classification(
     if seed:
         set_random_seed(seed)
     x, y = get_ml_matrices(csv)
-    x_train, x_test, y_train, y_test = prepare_train_test_data(x, y)
-    classification_for_different_classifiers(x_train, y_train, x_test, y_test)
+    x_train, x_valid, y_train, y_valid = prepare_train_valid_data(x, y)
+    classification_for_different_classifiers(x_train, y_train, x_valid, y_valid)

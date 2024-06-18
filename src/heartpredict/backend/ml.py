@@ -16,7 +16,7 @@ def set_random_seed(seed):
     """
     Set the random seed.
     Args:
-        seed:
+        seed: Random seed.
 
     Returns:
 
@@ -25,30 +25,56 @@ def set_random_seed(seed):
     RANDOM_SEED = seed
 
 
-def prepare_train_test_data(x, y):
+def calculate_max_tree_depth(n_features):
+    """
+    Calculate the maximum tree depth for decision tree and random forest.
+    Early stopping prevents overfitting.
+    Args:
+        n_features: Number of features.
+
+    Returns:
+        Maximum tree depth.
+    """
+    return int(np.log2(n_features)) + 1
+
+
+def calculate_k_min(n_samples):
+    """
+    Calculate the minimum number of neighbors for KNN.
+    Square root of the number of samples is a good starting point for practical applications.
+    Args:
+        n_samples: Number of samples.
+
+    Returns:
+        Minimum number of neighbors.
+    """
+    return int(np.sqrt(n_samples))
+
+
+def prepare_train_valid_data(x, y):
     """
     Prepare the train and test data.
     Args:
-        x:
-        y:
+        x: Feature data.
+        y: Target data.
 
     Returns:
-
+        x_train, x_valid, y_train, y_valid
     """
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=RANDOM_SEED)
-    x_train, x_test = scale_input_features(x_train, x_test)
-    return x_train, x_test, y_train, y_test
+    x_train, x_valid, y_train, y_valid = train_test_split(x, y, test_size=0.2, random_state=RANDOM_SEED)
+    x_train, x_valid = scale_input_features(x_train, x_valid)
+    return x_train, x_valid, y_train, y_valid
 
 
-def scale_input_features(x_train, x_test):
+def scale_input_features(x_train, x_valid):
     """
     Scale the input features.
     Args:
-        x_train:
-        x_test:
+        x_train: Training feature data.
+        x_valid: Validation feature data.
 
     Returns:
-
+        Scaled training and validation feature data.
     """
     scaler = StandardScaler()
     x_train = scaler.fit_transform(x_train)
@@ -59,22 +85,22 @@ def scale_input_features(x_train, x_test):
     scaler_file = output_dir / "used_scaler.joblib"
     joblib.dump(scaler, scaler_file, compress=False)
 
-    x_test = scaler.transform(x_test)
-    return x_train, x_test
+    x_valid = scaler.transform(x_valid)
+    return x_train, x_valid
 
 
 def k_fold_cross_validation(classifier, x, y, hyperparam_name, value):
     """
-    Perform k-fold cross validation.
+    Perform k-fold cross validation on given feature and target data.
     Args:
-        classifier:
-        x:
-        y:
-        hyperparam_name:
-        value:
+        classifier: Classifier model.
+        x: Feature data.
+        y: Target data.
+        hyperparam_name: Hyperparameter name for the specific classifier.
+        value: Hyperparameter value.
 
     Returns:
-
+        Mean accuracy score.
     """
     if hyperparam_name:
         classifier.set_params(**{hyperparam_name: value})
@@ -86,12 +112,12 @@ def train_w_best_hyperparam(classifier_hyper, x, y):
     """
     Fin the best hyperparameter value and train the classifier.
     Args:
-        classifier_hyper:
-        x:
-        y:
+        classifier_hyper: Tuple of classifier, hyperparameter name and hyperparameter values.
+        x: Feature data.
+        y: Target data.
 
     Returns:
-
+        Trained model, hyperparameter name and best hyperparameter value.
     """
     classifier, hyperparam_name, hyperparam_values = classifier_hyper
 
@@ -105,63 +131,65 @@ def train_w_best_hyperparam(classifier_hyper, x, y):
     return classifier, hyperparam_name, best_hyperparam_value
 
 
-def train_classification(classifier_hyper, x_train, y_train, x_test, y_test):
+def train_classification(classifier_hyper, x_train, y_train, x_valid, y_valid):
     """
     Train a classifier for classification task with a given hyperparameter.
     Args:
-        classifier_hyper:
-        x_train:
-        y_train:
-        x_test:
-        y_test:
+        classifier_hyper: Tuple of classifier, hyperparameter name and hyperparameter values.
+        x_train: Training feature data.
+        y_train: Training target data.
+        x_valid: Validation feature data.
+        y_valid: Validation target data.
 
     Returns:
-
+        Trained model, accuracy score and path to the model file.
     """
     model, hyperparam, best_hyperparam_value = train_w_best_hyperparam(classifier_hyper, x_train, y_train)
 
-    y_pred = model.predict(x_test)
-    acc = accuracy_score(y_test, y_pred)
+    # Evaluate the model for never seen data.
+    y_pred = model.predict(x_valid)
+    accuracy_on_validation = accuracy_score(y_valid, y_pred)
     print(f'Best Model for {type(model).__name__} with {hyperparam}={best_hyperparam_value}, '
-          f'Classes: {model.classes_}: Accuracy Score: {acc}')
+          f'Classes: {model.classes_}: Accuracy score for Validation Set: {accuracy_on_validation}')
 
     # Save the trained model
     output_dir = Path("results/trained_models")
     output_dir.mkdir(parents=True, exist_ok=True)
     model_file = output_dir / f"{type(model).__name__}_model_{RANDOM_SEED}.joblib"
     joblib.dump(model, model_file, compress=False)
-    return model, acc, model_file
+    return model, accuracy_on_validation, model_file
 
 
-def classification_for_different_classifiers(x_train, y_train, x_test, y_test):
+def classification_for_different_classifiers(x_train, y_train, x_valid, y_valid):
     """
     Train different classifiers for classification task.
     Args:
-        x_train:
-        y_train:
-        x_test:
-        y_test:
+        x_train: Training feature data.
+        y_train: Training target data.
+        x_valid: Validation feature data.
+        y_valid: Validation target data.
 
     Returns:
         Path to best performed model and its accuracy score.
     """
+    max_tree_depth = calculate_max_tree_depth(x_train.shape[1])
+    k_min = calculate_k_min(x_train.shape[0])
+
     classifiers_hyper = [
-        (DecisionTreeClassifier(random_state=RANDOM_SEED), "max_depth", range(1, 12)),
-        (RandomForestClassifier(random_state=RANDOM_SEED), "max_depth", range(1, 12)),
-        (KNeighborsClassifier(), "n_neighbors", range(3, 7)),
+        (DecisionTreeClassifier(random_state=RANDOM_SEED), "max_depth", range(1, max_tree_depth)),
+        (RandomForestClassifier(random_state=RANDOM_SEED), "max_depth", range(1, max_tree_depth)),
+        (KNeighborsClassifier(), "n_neighbors", range(k_min, k_min + 10)),
         (LinearDiscriminantAnalysis(), None, None),
         (QuadraticDiscriminantAnalysis(), None, None)
     ]
 
-    # TODO: Use different / combined evaluation metrics
-    # TODO: Evaluation based only based on accuracy score leads to overfitting.
     training_results = []  # List of tuples (classifier, accuracy_score, path_to_model)
     for classifier_hyper in classifiers_hyper:
-        training_results.append(train_classification(classifier_hyper, x_train, y_train, x_test, y_test))
+        training_results.append(train_classification(classifier_hyper, x_train, y_train, x_valid, y_valid))
 
     accuracy_scores = [score for _, score, _ in training_results]
     best_performance = np.argmax(accuracy_scores)
-    print(f'Best Model: {type(classifiers_hyper[best_performance][0]).__name__} with Accuracy Score: '
+    print(f'Best Model: {type(classifiers_hyper[best_performance][0]).__name__} with Accuracy Score on Validation Set: '
           f'{training_results[best_performance][1]}')
     return training_results[best_performance][2], training_results[best_performance][1]
 
@@ -170,7 +198,7 @@ def load_model(model_file):
     """
     Load the trained model.
     Args:
-        model_file:
+        model_file: Path to the model file.
 
     Returns:
         Loaded model.
