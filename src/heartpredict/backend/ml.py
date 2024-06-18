@@ -89,46 +89,46 @@ def scale_input_features(x_train, x_valid):
     return x_train, x_valid
 
 
-def k_fold_cross_validation(classifier, x, y, hyperparam_name, value):
+def k_fold_cross_validation(model, x, y, hyperparam_name, value):
     """
     Perform k-fold cross validation on given feature and target data.
     Args:
-        classifier: Classifier model.
+        model: ML model.
         x: Feature data.
         y: Target data.
-        hyperparam_name: Hyperparameter name for the specific classifier.
+        hyperparam_name: Hyperparameter name for the specific model.
         value: Hyperparameter value.
 
     Returns:
         Mean accuracy score.
     """
     if hyperparam_name:
-        classifier.set_params(**{hyperparam_name: value})
-    accuracy = cross_val_score(classifier, x, y)
+        model.set_params(**{hyperparam_name: value})
+    accuracy = cross_val_score(model, x, y)
     return accuracy.mean()
 
 
-def train_w_best_hyperparam(classifier_hyper, x, y):
+def train_w_best_hyperparam(model_hyper, x, y):
     """
-    Fin the best hyperparameter value and train the classifier.
+    Fin the best hyperparameter value and train the model.
     Args:
-        classifier_hyper: Tuple of classifier, hyperparameter name and hyperparameter values.
+        model_hyper: Tuple of model, hyperparameter name and hyperparameter values.
         x: Feature data.
         y: Target data.
 
     Returns:
         Trained model, hyperparameter name and best hyperparameter value.
     """
-    classifier, hyperparam_name, hyperparam_values = classifier_hyper
+    model, hyperparam_name, hyperparam_values = model_hyper
 
     best_hyperparam_value = None
     if hyperparam_name:
-        accuracies = [k_fold_cross_validation(classifier, x, y, hyperparam_name, value) for value in hyperparam_values]
+        accuracies = [k_fold_cross_validation(model, x, y, hyperparam_name, value) for value in hyperparam_values]
         best_hyperparam_value = hyperparam_values[np.argmax(accuracies)]
-        classifier.set_params(**{hyperparam_name: best_hyperparam_value})
+        model.set_params(**{hyperparam_name: best_hyperparam_value})
 
-    classifier.fit(x, y)
-    return classifier, hyperparam_name, best_hyperparam_value
+    model.fit(x, y)
+    return model, hyperparam_name, best_hyperparam_value
 
 
 def train_classification(classifier_hyper, x_train, y_train, x_valid, y_valid):
