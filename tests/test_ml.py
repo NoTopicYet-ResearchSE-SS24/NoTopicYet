@@ -65,6 +65,7 @@ def test_load_pretrained_regression_models_seed_42():
     error = round(root_mean_squared_error(y_test, elastic_net.predict(x_test)), 3)
     assert error == best_elastic_net_score
 
+
 def test_train_model_for_regression_seed_42():
     set_random_seed(RANDOM_SEED)
     x, y = get_ml_matrices("data/heart_failure_clinical_records.csv")
