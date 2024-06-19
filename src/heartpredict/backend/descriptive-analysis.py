@@ -100,21 +100,19 @@ def show_plot(plot_variable:tuple):
     plt.show()
 
 
-def create_conditional_dataset(df, condition:dict):
+def create_conditional_dataset(df, col:str, num:int, rel:str):
     """
     Create a conditional dataset, e.g. only patients over 60
 
     Input:
     DataFrame
-    Condition in dict form, e.g. {'col':'age', 'number': 60, 'relation': '>='}
+    Column name (e.g. 'age')
+    Number for comparison (e.g. 60)
+    Relation for comparison (e.g. '>')
 
     Output:
     DataFrame with condition applied
     """
-    
-    col = condition["col"]
-    num = condition["number"]
-    rel = condition["relation"]
 
     # Check the condition's relation
     if rel == "==":
