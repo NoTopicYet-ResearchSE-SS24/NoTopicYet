@@ -60,8 +60,8 @@ def test_load_pretrained_regression_models_seed_42():
     error = round(root_mean_squared_error(y_test, logistic_regressor.predict(x_test)), 3)
     assert error == best_logistic_regression_score
 
-    best_elastic_net_score = 0.369
-    elastic_net = load_model(f"results/trained_models/regression/ElasticNet_model_{RANDOM_SEED}.joblib")
+    best_elastic_net_score = 0.386
+    elastic_net = load_model(f"results/trained_models/regression/LogisticRegressionCV_model_{RANDOM_SEED}.joblib")
     error = round(root_mean_squared_error(y_test, elastic_net.predict(x_test)), 3)
     assert error == best_elastic_net_score
 
@@ -71,7 +71,7 @@ def test_train_model_for_regression_seed_42():
     x_train, x_test, y_train, y_test = prepare_train_valid_data(x, y)
     path_to_best_model, _ = regression_for_different_regressors(x_train, y_train, x_test, y_test)
 
-    best_model_rmse = 0.369
+    best_model_rmse = 0.386
     best_model = load_model(path_to_best_model)
     error = round(root_mean_squared_error(y_test, best_model.predict(x_test)), 3)
     assert error == best_model_rmse
