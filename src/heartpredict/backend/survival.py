@@ -1,4 +1,4 @@
-from heartpredict.backend.ml import load_model, scale_input_features
+from heartpredict.backend.ml import load_model
 from heartpredict.backend.io import get_data_frame, get_ml_matrices
 
 import pandas as pd
