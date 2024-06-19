@@ -3,7 +3,7 @@ import pandas as pd
 
 
 @lru_cache
-def get_data_frame(csv_file_path: str = "data/heart_failure_clinical_records_dataset.csv"):
+def get_data_frame(csv_file_path: str = "data/heart_failure_clinical_records.csv"):
     """
     Get the data frame.
     Returns:
@@ -14,7 +14,7 @@ def get_data_frame(csv_file_path: str = "data/heart_failure_clinical_records_dat
 
 
 @lru_cache
-def get_ml_matrices(csv_file_path: str = "data/heart_failure_clinical_records_dataset.csv"):
+def get_ml_matrices(csv_file_path: str = "data/heart_failure_clinical_records.csv"):
     """
     Load the data from the csv file.
     Returns:

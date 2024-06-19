@@ -4,9 +4,10 @@ from pathlib import Path
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, root_mean_squared_error
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 from sklearn.model_selection import cross_val_score, train_test_split
 
 RANDOM_SEED = 42
@@ -49,6 +50,18 @@ def calculate_k_min(n_samples):
         Minimum number of neighbors.
     """
     return int(np.sqrt(n_samples))
+
+
+def load_model(model_file):
+    """
+    Load the trained model.
+    Args:
+        model_file: Path to the model file.
+
+    Returns:
+        Loaded model.
+    """
+    return joblib.load(model_file)
 
 
 def prepare_train_valid_data(x, y):
@@ -131,33 +144,63 @@ def train_w_best_hyperparam(model_hyper, x, y):
     return model, hyperparam_name, best_hyperparam_value
 
 
-def train_classification(classifier_hyper, x_train, y_train, x_valid, y_valid):
+def train_model(model_hyper, x_train, y_train, x_valid, y_valid, prediction_task):
     """
     Train a classifier for classification task with a given hyperparameter.
     Args:
-        classifier_hyper: Tuple of classifier, hyperparameter name and hyperparameter values.
+        model_hyper: Tuple of model, hyperparameter name and hyperparameter values.
         x_train: Training feature data.
         y_train: Training target data.
         x_valid: Validation feature data.
         y_valid: Validation target data.
+        prediction_task: Dictionary that contains the name of the task, evaluation metric name and evaluation metric.
 
     Returns:
-        Trained model, accuracy score and path to the model file.
+        Trained model, score and path to the model file.
     """
-    model, hyperparam, best_hyperparam_value = train_w_best_hyperparam(classifier_hyper, x_train, y_train)
+    model, hyperparam, best_hyperparam_value = train_w_best_hyperparam(model_hyper, x_train, y_train)
 
     # Evaluate the model for never seen data.
     y_pred = model.predict(x_valid)
-    accuracy_on_validation = accuracy_score(y_valid, y_pred)
-    print(f'Best Model for {type(model).__name__} with {hyperparam}={best_hyperparam_value}, '
-          f'Classes: {model.classes_}: Accuracy score for Validation Set: {accuracy_on_validation}')
+    score_on_validation = prediction_task['eval_metric'](y_valid, y_pred)
+    eval_metric_name = prediction_task['eval_metric_name']
+    print(f'Best Model for {type(model).__name__} with {hyperparam}={best_hyperparam_value}, {eval_metric_name} for '
+          f'Validation Set: {score_on_validation}')
 
     # Save the trained model
-    output_dir = Path("results/trained_models")
+    prediction_task_name = prediction_task['name']
+    output_dir = Path(f"results/trained_models/{prediction_task_name}")
     output_dir.mkdir(parents=True, exist_ok=True)
     model_file = output_dir / f"{type(model).__name__}_model_{RANDOM_SEED}.joblib"
     joblib.dump(model, model_file, compress=False)
-    return model, accuracy_on_validation, model_file
+    return model, score_on_validation, model_file
+
+
+def train_models(models_hyper, x_train, y_train, x_valid, y_valid, prediction_task):
+    """
+    Train multiple ML models.
+    Args:
+        models_hyper: List of tuples of model, hyperparameter name and hyperparameter values.
+        x_train: Feature for training.
+        y_train: Target for training.
+        x_valid: Feature for validation.
+        y_valid: Target for validation.
+        prediction_task: Dictionary that contains the name of the task, evaluation metric name and evaluation metric.
+
+    Returns:
+
+    """
+    training_results = []  # List of tuples (regressor, score, path_to_model)
+    for regressor_hyper in models_hyper:
+        training_results.append(
+            train_model(regressor_hyper, x_train, y_train, x_valid, y_valid, prediction_task))
+
+    eval_metric_name = prediction_task['eval_metric_name']
+    scores = [score for _, score, _ in training_results]
+    best_performance = prediction_task['evaluation'](scores)
+    print(f'Best Model: {type(models_hyper[best_performance][0]).__name__} with {eval_metric_name} on Validation Set: '
+          f'{training_results[best_performance][1]}')
+    return training_results[best_performance][2], training_results[best_performance][1]
 
 
 def classification_for_different_classifiers(x_train, y_train, x_valid, y_valid):
@@ -172,6 +215,13 @@ def classification_for_different_classifiers(x_train, y_train, x_valid, y_valid)
     Returns:
         Path to best performed model and its accuracy score.
     """
+    classification_task = {
+        "name": "classification",
+        "eval_metric_name": "accuracy",
+        "eval_metric": accuracy_score,
+        "evaluation": np.argmax
+    }
+
     max_tree_depth = calculate_max_tree_depth(x_train.shape[1])
     k_min = calculate_k_min(x_train.shape[0])
 
@@ -183,24 +233,32 @@ def classification_for_different_classifiers(x_train, y_train, x_valid, y_valid)
         (QuadraticDiscriminantAnalysis(), None, None)
     ]
 
-    training_results = []  # List of tuples (classifier, accuracy_score, path_to_model)
-    for classifier_hyper in classifiers_hyper:
-        training_results.append(train_classification(classifier_hyper, x_train, y_train, x_valid, y_valid))
-
-    accuracy_scores = [score for _, score, _ in training_results]
-    best_performance = np.argmax(accuracy_scores)
-    print(f'Best Model: {type(classifiers_hyper[best_performance][0]).__name__} with Accuracy Score on Validation Set: '
-          f'{training_results[best_performance][1]}')
-    return training_results[best_performance][2], training_results[best_performance][1]
+    return train_models(classifiers_hyper, x_train, y_train, x_valid, y_valid, classification_task)
 
 
-def load_model(model_file):
+def regression_for_different_regressors(x_train, y_train, x_valid, y_valid):
     """
-    Load the trained model.
+    Train different regressors for regression task.
     Args:
-        model_file: Path to the model file.
+        x_train: Training feature data.
+        y_train: Training target data.
+        x_valid: Validation feature data.
+        y_valid: Validation target data.
 
     Returns:
-        Loaded model.
+        Path to best performed model and its rmse score.
     """
-    return joblib.load(model_file)
+    regression_task = {
+        "name": "regression",
+        "eval_metric_name": "rmse",
+        "eval_metric": root_mean_squared_error,
+        "evaluation": np.argmin
+    }
+
+    regressors_hyper = [
+        (LogisticRegression(random_state=RANDOM_SEED), "C", np.arange(0.2, 2.2, 0.2)),
+        (LogisticRegressionCV(penalty="elasticnet", solver="saga", l1_ratios=np.arange(0.1, 1.1, 0.1),
+                              random_state=RANDOM_SEED), None, None),
+    ]
+
+    return train_models(regressors_hyper, x_train, y_train, x_valid, y_valid, regression_task)
