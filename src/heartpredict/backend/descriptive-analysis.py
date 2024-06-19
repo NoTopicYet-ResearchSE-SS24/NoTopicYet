@@ -131,13 +131,3 @@ def create_conditional_dataset(df, condition:dict):
     # Return conditioned dataset
     df_cond = df[cond].copy()
     return df_cond
-
-
-df=import_csv()
-
-sample_condition = {"col": "age",
-                     "number": 60,
-                     "relation": ">="}
-
-a=create_conditional_dataset(df, condition=sample_condition)
-print(a.age.unique())
