@@ -3,22 +3,32 @@ from heartpredict.backend.io import get_data_frame, get_ml_matrices
 
 import pandas as pd
 import matplotlib.pyplot as plt
+from pathlib import Path
 from sksurv.nonparametric import kaplan_meier_estimator
 
-def create_kaplan_meier_plot(path_to_regressor):
 
+def create_kaplan_meier_plot(path_to_regressor, out_dir):
+    """
+    Create a Kaplan-Meier plot stratified by predicted risk groups.
+    Args:
+        path_to_regressor: Path to the regressor model.
+        out_dir: Output directory to save the plot.
+
+    Returns:
+        None
+    """
     regressor = load_model(path_to_regressor)
-    x, y = get_ml_matrices()
-    x, _ = scale_input_features(x, x)
     data = get_data_frame()
+    x, y = get_ml_matrices()
+    x, _ = scale_input_features(x, None)
 
     days_column = data.columns[-2]
     death_event_column = data.columns[-1]
 
-    # Predict probabilities of a death event
+    # Predict probabilities of a death event.
     data['death_event_prob'] = regressor.predict_proba(x)[:, 1]
 
-    # Stratify data based on predicted probabilities
+    # Stratify data based on predicted probabilities.
     data['risk_group'] = pd.qcut(data['death_event_prob'], q=3, labels=["Low Risk", "Medium Risk", "High Risk"])
 
     # Plot Kaplan-Meier curves for each risk group
@@ -34,7 +44,8 @@ def create_kaplan_meier_plot(path_to_regressor):
     plt.title("Kaplan-Meier Survival Curves Stratified by Predicted Risk")
     plt.legend()
     plt.grid(True)
-    plt.savefig('kaplan_meier_plot.png')
 
-
-
+    output_dir = Path(out_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    plt.savefig(output_dir / 'kaplan_meier_plot.png')
+    print(f"Kaplan-Meier plot saved to {output_dir / 'kaplan_meier_plot.png'}")

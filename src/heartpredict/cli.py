@@ -34,11 +34,25 @@ def train_model_for_classification(
 
 
 @app.command()
-def kaplan_meier_plot(seed: Optional[int] = typer.Option(None, "--seed", help="Random seed for reproducibility."),
-                      csv: Optional[str] = "data/heart_failure_clinical_records.csv") -> None:
+def train_model_for_regression(
+        seed: Optional[int] = typer.Option(None, "--seed", help="Random seed for reproducibility."),
+        csv: Optional[str] = "data/heart_failure_clinical_records.csv") -> None:
     if seed:
         set_random_seed(seed)
     x, y = get_ml_matrices(csv)
     x_train, x_valid, y_train, y_valid = prepare_train_valid_data(x, y)
-    path_to_best_model, _ = regression_for_different_regressors(x_train, y_train, x_valid, y_valid)
-    create_kaplan_meier_plot(path_to_best_model)
+    regression_for_different_regressors(x_train, y_train, x_valid, y_valid)
+
+
+@app.command()
+def kaplan_meier_plot(seed: Optional[int] = typer.Option(None, "--seed", help="Random seed for reproducibility."),
+                      regressor: Optional[str] = typer.Option(None, "--regressor", help="Path to the regressor model."),
+                      csv: Optional[str] = "data/heart_failure_clinical_records.csv",
+                      out_dir: Optional[str] = "results/survival") -> None:
+    if seed:
+        set_random_seed(seed)
+    if regressor is None:
+        x, y = get_ml_matrices(csv)
+        x_train, x_valid, y_train, y_valid = prepare_train_valid_data(x, y)
+        regressor, _ = regression_for_different_regressors(x_train, y_train, x_valid, y_valid)
+    create_kaplan_meier_plot(regressor, out_dir)
