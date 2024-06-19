@@ -18,9 +18,10 @@ def create_kaplan_meier_plot(path_to_regressor, out_dir):
         None
     """
     regressor = load_model(path_to_regressor)
+    scaler = load_model("results/scalers/used_scaler.joblib")
     data = get_data_frame()
     x, y = get_ml_matrices()
-    x, _ = scale_input_features(x, None)
+    x = scaler.transform(x)
 
     days_column = data.columns[-2]
     death_event_column = data.columns[-1]

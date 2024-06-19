@@ -72,8 +72,7 @@ def scale_input_features(x_train, x_valid):
     scaler_file = output_dir / "used_scaler.joblib"
     joblib.dump(scaler, scaler_file, compress=False)
 
-    if x_valid is not None:
-        x_valid = scaler.transform(x_valid)
+    x_valid = scaler.transform(x_valid)
     return x_train, x_valid
 
 
