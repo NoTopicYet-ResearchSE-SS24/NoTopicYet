@@ -4,7 +4,7 @@ from heartpredict.backend.io import get_data_frame, get_ml_matrices
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
-from sksurv.nonparametric import kaplan_meier_estimator
+from lifelines import KaplanMeierFitter
 
 
 def create_kaplan_meier_plot(path_to_regressor, out_dir):
@@ -33,19 +33,22 @@ def create_kaplan_meier_plot(path_to_regressor, out_dir):
 
     # Plot Kaplan-Meier curves for each risk group
     plt.figure(figsize=(10, 6))
+    kmf = KaplanMeierFitter()
+
     for group, subset in data.groupby('risk_group', observed=True):
         time = subset[days_column]
         event_observed = subset[death_event_column].astype(bool)
-        km_time, km_prob = kaplan_meier_estimator(event_observed, time)
-        plt.step(km_time, km_prob, where="post", label=group)
+        kmf.fit(durations=time, event_observed=event_observed, label=group)
+        kmf.plot_survival_function()
 
     plt.xlabel("Days")
-    plt.ylabel("Survival probability")
+    plt.ylabel("Survival Probability")
     plt.title("Kaplan-Meier Survival Curves Stratified by Predicted Risk")
-    plt.legend()
+    plt.legend(title="Risk Group")
     plt.grid(True)
 
     output_dir = Path(out_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_dir / 'kaplan_meier_plot.png')
+    plt.close()
     print(f"Kaplan-Meier plot saved to {output_dir / 'kaplan_meier_plot.png'}")
