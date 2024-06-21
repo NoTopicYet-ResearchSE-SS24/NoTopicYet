@@ -13,22 +13,16 @@ MEANING_BINARY_COLUMNS = {
 }
 
 
-def import_csv(csv_path: str = "data/heart_failure_clinical_records.csv"):
-    """Import dataset into Pandas DataFrame"""
-    df = pd.read_csv(csv_path)
-    return df
-
-
 def calculate_basic_statistics(df, col:str):
     """
-    Determine basic statistics for a given column
+    Determine basic statistics for a DataFrame column
 
-    Input:
-    DataFrame of (sub)dataset
-    Column to be analyzed
+    Args:
+        df: DataFrame of (sub)dataset
+        col: Column to be analyzed
 
-    Output:
-    Dictionary with statistical infos
+    Returns:
+        Dictionary with statistical infos
     """
     # Save and return the results as a dict
     results = {}
@@ -63,13 +57,31 @@ def calculate_basic_statistics(df, col:str):
 
 
 def save_variable_distribution(df, col:str):
-    """Save unique variable expressions of a dataset column in a dict"""
+    """
+    Save unique variable expressions of a DataFrame column in a dict
+    
+    Args:
+        df: DataFrame of (sub)dataset
+        col: Column to be analyzed
+
+    Returns:
+        Dictionary counting the variable expressions
+    """
     distribution = df[col].value_counts().to_dict()
     return distribution
 
 
 def save_distribution_plot(distribution:dict, col_name:str):
-    """Create and return a simple bar plot for a specific column"""
+    """
+    Create and return a simple bar plot for a specific column
+    
+    Args:
+        distribution: Dictionary counting the variable expressions
+        col_name: Column name for plot description
+
+    Returns:
+        Tuple for the plot variables (fig, ax)
+    """
     labels = distribution.keys()
     values = distribution.values()  
 
@@ -91,11 +103,13 @@ def show_plot(plot_variable:tuple):
     """
     Visualize a given plot variable
 
-    Input:
-    (fig,ax) tuple, as created with save_distribution_plot
     
-    Output:
-    Prints-out plot
+    Args:
+        plot_variable: Tuple for the plot variables (fig, ax)
+
+    Returns:
+        None
+        Prints plot
     """
     fig, ax = plot_variable
     plt.show()
@@ -103,16 +117,16 @@ def show_plot(plot_variable:tuple):
 
 def create_conditional_dataset(df, col:str, num:int, rel:str):
     """
-    Create a conditional dataset, e.g. only patients over 60
+    Create a filtered dataset, e.g. only patients over 60
 
-    Input:
-    DataFrame
-    Column name (e.g. 'age')
-    Number for comparison (e.g. 60)
-    Relation for comparison (e.g. '>')
+    Args:
+        df: DataFrame of (sub)dataset
+        col: Column name for filtering (e.g. 'age')
+        num: Number for filtering (e.g. 60)
+        rel: Relation for filtering (e.g. ">")
 
-    Output:
-    DataFrame with condition applied
+    Returns:
+        DataFrame of filtered dataset
     """
 
     # Check the condition's relation
