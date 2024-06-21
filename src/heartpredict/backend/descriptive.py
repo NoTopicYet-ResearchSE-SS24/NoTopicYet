@@ -1,7 +1,6 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-from io import get_data_frame
+"""Utilities for conducting a descriptive data analysis"""
 
+import matplotlib.pyplot as plt
 
 MEANING_BINARY_COLUMNS = {
     "anaemia": {0: "No anaemia", 1: "anaemia"},
