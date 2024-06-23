@@ -41,13 +41,16 @@ class ClassificationResult:
     model_file: Path
 
 
-
 class MLBackend:
-    def __init__(self, data: MLData,) -> None:
+    def __init__(
+        self,
+        data: MLData,
+    ) -> None:
         self.data = data
 
-
-    def k_fold_cross_validation(self, classifier: BaseEstimator, hyperparam_name: str, value: Any) -> Any:
+    def k_fold_cross_validation(
+        self, classifier: BaseEstimator, hyperparam_name: str, value: Any
+    ) -> Any:
         """
         Perform k-fold cross validation.
         Args:
@@ -65,8 +68,9 @@ class MLBackend:
         accuracy = cross_val_score(classifier, self.data.raw.x, self.data.raw.y)
         return accuracy.mean()
 
-
-    def train_w_best_hyperparam(self, classifier: ClassifierWithParams) -> TrainingResult:
+    def train_w_best_hyperparam(
+        self, classifier: ClassifierWithParams
+    ) -> TrainingResult:
         """
         Fin the best hyperparameter value and train the classifier.
         Args:
@@ -81,25 +85,27 @@ class MLBackend:
         if classifier.hyperparam_name and classifier.values:
             accuracies = [
                 self.k_fold_cross_validation(
-                    classifier.model,
-                    classifier.hyperparam_name,
-                    value)
+                    classifier.model, classifier.hyperparam_name, value
+                )
                 for value in classifier.values
-                ]
+            ]
             best_hyperparam_value = classifier.values[np.argmax(accuracies)]
-            classifier.model.set_params(**{classifier.hyperparam_name: best_hyperparam_value})
+            classifier.model.set_params(
+                **{classifier.hyperparam_name: best_hyperparam_value}
+            )
 
-        classifier.model.fit(self.data.train.x, self.data.train.y)   # type: ignore
+        classifier.model.fit(self.data.train.x, self.data.train.y)  # type: ignore
         return TrainingResult(
             classifier.model,
             type(classifier.model).__name__,
             classifier.model.classes_,  # type: ignore
             classifier.hyperparam_name,
-            best_hyperparam_value
+            best_hyperparam_value,
         )
 
-
-    def train_classification(self, classifier: ClassifierWithParams) -> ClassificationResult:
+    def train_classification(
+        self, classifier: ClassifierWithParams
+    ) -> ClassificationResult:
         """
         Train a classifier for classification task with a given hyperparameter.
         Args:
@@ -114,19 +120,25 @@ class MLBackend:
         """
         training_result = self.train_w_best_hyperparam(classifier)
 
-        y_pred = training_result.model.predict(self.data.test.x)    # type: ignore
+        y_pred = training_result.model.predict(self.data.test.x)  # type: ignore
         acc = accuracy_score(self.data.test.y, y_pred)
-        print(f'Best Model for {training_result.model_name} with {training_result.hyperparam_name}={training_result.best_hyperparam_value}, '
-            f'Classes: {training_result.model_classes}: Accuracy Score: {acc}')
+        print(
+            f"Best Model for {training_result.model_name}"
+            f"with {training_result.hyperparam_name}"
+            f"={training_result.best_hyperparam_value}, "
+            f"Classes: {training_result.model_classes}: Accuracy Score: {acc}"
+        )
 
         # Save the trained model
         output_dir = Path("results/trained_models")
         output_dir.mkdir(parents=True, exist_ok=True)
-        model_file = output_dir / f"{training_result.model_name}_model_{self.data.random_seed}.joblib"
+        model_file = (
+            output_dir
+            / f"{training_result.model_name}_model_{self.data.random_seed}.joblib"
+        )
         joblib.dump(training_result.model, model_file, compress=False)
         # return training_result.model, acc, model_file
         return ClassificationResult(training_result.model, float(acc), model_file)
-
 
     def classification_for_different_classifiers(self) -> ClassificationResult:
         """
@@ -141,11 +153,19 @@ class MLBackend:
             Path to best performed model and its accuracy score.
         """
         classifiers = [
-            ClassifierWithParams(DecisionTreeClassifier(random_state=self.data.random_seed), "max_depth", range(1, 12)),
-            ClassifierWithParams(RandomForestClassifier(random_state=self.data.random_seed), "max_depth", range(1, 12)),
+            ClassifierWithParams(
+                DecisionTreeClassifier(random_state=self.data.random_seed),
+                "max_depth",
+                range(1, 12),
+            ),
+            ClassifierWithParams(
+                RandomForestClassifier(random_state=self.data.random_seed),
+                "max_depth",
+                range(1, 12),
+            ),
             ClassifierWithParams(KNeighborsClassifier(), "n_neighbors", range(3, 7)),
             ClassifierWithParams(LinearDiscriminantAnalysis(), "", None),
-            ClassifierWithParams(QuadraticDiscriminantAnalysis(), "", None)
+            ClassifierWithParams(QuadraticDiscriminantAnalysis(), "", None),
         ]
 
         # TODO: Use different / combined evaluation metrics
@@ -154,10 +174,12 @@ class MLBackend:
 
         accuracy_scores = [res.accuracy for res in training_results]
         best_performance = np.argmax(accuracy_scores)
-        print(f'Best Model: {type(training_results[best_performance].model).__name__} with Accuracy Score: '
-            f'{training_results[best_performance].accuracy}')
+        print(
+            f"Best Model: {type(training_results[best_performance].model).__name__}"
+            "with Accuracy Score: "
+            f"{training_results[best_performance].accuracy}"
+        )
         return training_results[best_performance]
-
 
 
 def load_model(model_file) -> Any:
@@ -172,10 +194,6 @@ def load_model(model_file) -> Any:
     return joblib.load(model_file)
 
 
-
 @lru_cache(typed=True)
 def get_ml_backend(ml_data: MLData) -> MLBackend:
     return MLBackend(ml_data)
-    
-
-

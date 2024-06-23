@@ -8,11 +8,11 @@ MEANING_BINARY_COLUMNS = {
     "high_blood_pressure": {0: "Normal blood pressure", 1: "High blood pressure"},
     "sex": {0: "Female", 1: "Male"},
     "smoking": {0: "Not smoking", 1: "Is smoking"},
-    "DEATH_EVENT": {0: "Survived", 1: "Died"}
+    "DEATH_EVENT": {0: "Survived", 1: "Died"},
 }
 
 
-def calculate_basic_statistics(df, col:str):
+def calculate_basic_statistics(df, col: str):
     """
     Determine basic statistics for a DataFrame column
 
@@ -51,14 +51,14 @@ def calculate_basic_statistics(df, col:str):
         results["Mean"] = attributes["mean"]
         results["Median"] = attributes["50%"]
         results["Standard deviation"] = attributes["std"]
-        
+
     return results
 
 
-def save_variable_distribution(df, col:str):
+def save_variable_distribution(df, col: str):
     """
     Save unique variable expressions of a DataFrame column in a dict
-    
+
     Args:
         df: DataFrame of (sub)dataset
         col: Column to be analyzed
@@ -70,10 +70,10 @@ def save_variable_distribution(df, col:str):
     return distribution
 
 
-def save_distribution_plot(distribution:dict, col_name:str):
+def save_distribution_plot(distribution: dict, col_name: str):
     """
     Create and return a simple bar plot for a specific column
-    
+
     Args:
         distribution: Dictionary counting the variable expressions
         col_name: Column name for plot description
@@ -82,7 +82,7 @@ def save_distribution_plot(distribution:dict, col_name:str):
         Tuple for the plot variables (fig, ax)
     """
     labels = distribution.keys()
-    values = distribution.values()  
+    values = distribution.values()
 
     # Create a figure and ax object
     fig, ax = plt.subplots()
@@ -98,11 +98,11 @@ def save_distribution_plot(distribution:dict, col_name:str):
     return plot_variable
 
 
-def show_plot(plot_variable:tuple):
+def show_plot(plot_variable: tuple):
     """
     Visualize a given plot variable
 
-    
+
     Args:
         plot_variable: Tuple for the plot variables (fig, ax)
 
@@ -114,7 +114,7 @@ def show_plot(plot_variable:tuple):
     plt.show()
 
 
-def create_conditional_dataset(df, col:str, num:int, rel:str):
+def create_conditional_dataset(df, col: str, num: int, rel: str):
     """
     Create a filtered dataset, e.g. only patients over 60
 
