@@ -15,8 +15,8 @@ def project_data_func() -> Callable[..., ProjectData]:
 
 
 @pytest.fixture
-def ml_data_func() -> Callable[..., MLData]:
+def ml_data_func(project_data_func: Callable[..., ProjectData]) -> Callable[..., MLData]:
     def _ml_data_factory(test_size: float = 0.2, random_seed: int = 42) -> MLData:
-        return get_ml_data(project_data_func()(), test_size, random_seed)
+        return get_ml_data(project_data_func(), test_size, random_seed)
     return _ml_data_factory
 
