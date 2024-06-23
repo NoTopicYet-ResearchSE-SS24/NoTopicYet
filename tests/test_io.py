@@ -1,16 +1,9 @@
-import pytest
+from typing import Callable
 
-from heartpredict.backend.io import get_ml_matrices
-
-
-def test_get_ml_matrices():
-    x, y = get_ml_matrices("data/heart_failure_clinical_records.csv")
-    assert x.shape == (5000, 12)
-    assert y.shape == (5000,)
+from heartpredict.backend.data import MLData
 
 
-def test_get_ml_matrices_w_wrong_path():
-    with pytest.raises(FileNotFoundError) as exc_info:
-        _, _ = get_ml_matrices("MY_WRONG_PATH")
-
-    assert str(exc_info.value) == "[Errno 2] No such file or directory: 'MY_WRONG_PATH'"
+def test_raw_ml_matrices(ml_data_func: Callable[..., MLData]) -> None:
+    ml_data = ml_data_func()
+    assert ml_data.raw.x.shape == (5000, 12)
+    assert ml_data.raw.y.shape == (5000,)
