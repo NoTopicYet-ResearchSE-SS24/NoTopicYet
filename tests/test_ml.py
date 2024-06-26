@@ -41,7 +41,8 @@ def test_load_pretrained_models_seed_42(ml_data_func: Callable[..., MLData]) -> 
     with pytest.raises(FileNotFoundError) as exc_info:
         load_model("CoolModel.joblib")
     assert (
-            str(exc_info.value) == "[Errno 2] No such file or directory: 'CoolModel.joblib'"
+            str(exc_info.value) == "[Errno 2] No such file or directory: "
+                                   "'CoolModel.joblib'"
     )
 
 
