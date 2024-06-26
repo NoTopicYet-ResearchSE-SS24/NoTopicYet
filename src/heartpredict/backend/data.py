@@ -40,7 +40,8 @@ class MLData:
     @classmethod
     @lru_cache
     def build(
-            cls, project_data: ProjectData, test_size: float = 0.2, random_seed: int = 42
+            cls, project_data: ProjectData, test_size: float = 0.2,
+            random_seed: int = 42
     ):
         return cls(project_data, test_size, random_seed)
 
@@ -70,7 +71,8 @@ class MLData:
             test_size=self.test_size,
             random_state=self.random_seed,
         )
-        x_train, x_valid = self._scale_input_features(unscaled_x_train, unscaled_x_valid)
+        x_train, x_valid = self._scale_input_features(unscaled_x_train,
+                                                      unscaled_x_valid)
         return NumpyMatrix(x_train, y_train), NumpyMatrix(x_valid, y_valid)
 
     def _scale_input_features(
