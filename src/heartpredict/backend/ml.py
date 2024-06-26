@@ -80,7 +80,10 @@ class MLBackend:
                 range(self.k_min, self.k_min + 10),
                 "classifier"
             ),
-            ModelWithParams(KNeighborsClassifier(), "n_neighbors", range(3, 7), "classifier"),
+            ModelWithParams(KNeighborsClassifier(),
+                            "n_neighbors",
+                            range(3, 7),
+                            "classifier"),
             ModelWithParams(LinearDiscriminantAnalysis(), "", None, "classifier"),
             ModelWithParams(QuadraticDiscriminantAnalysis(), "", None, "classifier"),
         ]
@@ -90,7 +93,8 @@ class MLBackend:
 
     def regression_for_different_regressors(self) -> OptimalModel:
         """
-        Perform regression with different regressors and return the best performing model.
+        Perform regression with different regressors and
+        return the best performing model.
         Returns:
             OptimalModel: Best performing model of all regressors.
         """
@@ -111,7 +115,11 @@ class MLBackend:
                 "regressor"
             ),
         ]
-        eval_metric = EvaluationMetric("Root Mean Squared Error", root_mean_squared_error, np.argmin)
+        eval_metric = EvaluationMetric(
+            "Root Mean Squared Error",
+            root_mean_squared_error,
+            np.argmin
+        )
         return self._train_models(regressors, eval_metric)
 
     def _k_fold_cross_validation(
@@ -176,13 +184,13 @@ class MLBackend:
         training_result = self._train_w_best_hyperparam(model)
 
         y_pred = training_result.model.predict(self.data.valid.x)  # type: ignore
-        acc = eval_metric.function(self.data.valid.y, y_pred)
+        score = eval_metric.function(self.data.valid.y, y_pred)
         print(
             f"Best Model for {training_result.model_name}"
             f"with {training_result.hyperparam_name}"
             f"={training_result.best_hyperparam_value}, "
             f"Classes: {training_result.model_classes}: "
-            f"{eval_metric.name} Score: {acc}"
+            f"{eval_metric.name} Score: {score}"
         )
 
         # Save the trained model
@@ -193,7 +201,12 @@ class MLBackend:
                 / f"{training_result.model_name}_model_{self.data.random_seed}.joblib"
         )
         joblib.dump(training_result.model, model_file, compress=False)
-        return OptimalModel(training_result.model, eval_metric.name, float(acc), model_file)
+        return OptimalModel(
+            training_result.model,
+            eval_metric.name,
+            float(score),
+            model_file
+        )
 
     def _train_models(self, models, eval_metric) -> OptimalModel:
         """
@@ -229,7 +242,8 @@ class MLBackend:
     def _calculate_k_min(self):
         """
         Calculate the minimum number of neighbors for KNN.
-        Square root of the number of samples is a good starting point for practical applications.
+        Square root of the number of samples is a good
+        starting point for practical applications.
 
         Returns:
             Minimum number of neighbors.

@@ -1,4 +1,4 @@
-from heartpredict.backend.data import MLData, ProjectData
+from heartpredict.backend.data import MLData
 from heartpredict.backend.ml import load_model
 
 import pandas as pd

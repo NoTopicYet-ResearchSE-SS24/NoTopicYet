@@ -16,7 +16,8 @@ class NumpyMatrix:
 
 
 class ProjectData:
-    def __init__(self, csv: Path = Path("data/heart_failure_clinical_records.csv")) -> None:
+    def __init__(self,
+                 csv: Path = Path("data/heart_failure_clinical_records.csv")) -> None:
         self.df = pd.read_csv(csv)
 
     @classmethod
@@ -35,7 +36,7 @@ class MLData:
         self.test_size = test_size
         self.random_seed = random_seed
         self.dataset = self._get_whole_dataset()
-        self.scaled_feature_matrix = MLData._scale_input_features(self.dataset.x, None)[0]
+        self.scaled_feature_matrix = MLData._scale_input_features(self.dataset.x)[0]
         self.train, self.valid = self._get_prepared_matrices()
 
     @classmethod
@@ -75,7 +76,7 @@ class MLData:
 
     @staticmethod
     def _scale_input_features(
-            x_train: np.ndarray, x_valid: np.ndarray
+            x_train: np.ndarray, x_valid: np.ndarray | None = None
     ) -> tuple[np.ndarray, np.ndarray]:
         """
         Scale input features.
