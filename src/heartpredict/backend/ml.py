@@ -89,7 +89,7 @@ class MLBackend:
             classifier.model.set_params(
                 **{classifier.hyperparam_name: best_hyperparam_value}
             )
-        classifier.model.fit(self.data.train.x, self.data.train.y)  # type: ignore
+        classifier.model.fit(self.data.train.x, self.data.train.y)
         return TrainingResult(
             classifier.model,
             type(classifier.model).__name__,
