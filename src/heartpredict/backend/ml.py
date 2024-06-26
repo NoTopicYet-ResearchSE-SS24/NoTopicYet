@@ -43,43 +43,39 @@ class ClassificationResult:
 
 class MLBackend:
     def __init__(
-        self,
-        data: MLData,
+            self,
+            data: MLData,
     ) -> None:
         self.data = data
 
     def k_fold_cross_validation(
-        self, classifier: BaseEstimator, hyperparam_name: str, value: Any
+            self, classifier: BaseEstimator, hyperparam_name: str, value: Any
     ) -> Any:
         """
         Perform k-fold cross validation.
         Args:
-            classifier:
-            x:
-            y:
-            hyperparam_name:
-            value:
+            classifier: Classifier to train.
+            hyperparam_name: Hyperparameter name.
+            value: Value of the hyperparameter.
 
         Returns:
-
+            Any: Mean accuracy score.
         """
         if hyperparam_name:
             classifier.set_params(**{hyperparam_name: value})
-        accuracy = cross_val_score(classifier, self.data.raw.x, self.data.raw.y)
+        accuracy = cross_val_score(classifier, self.data.train.x, self.data.train.y)
         return accuracy.mean()
 
     def train_w_best_hyperparam(
-        self, classifier: ClassifierWithParams
+            self, classifier: ClassifierWithParams
     ) -> TrainingResult:
         """
-        Fin the best hyperparameter value and train the classifier.
+        Train the classifier with the best hyperparameter value.
         Args:
-            classifier_hyper:
-            x:
-            y:
+            classifier: Classifier to train.
 
         Returns:
-
+            TrainingResult: Best model with hyperparameter tuning.
         """
         best_hyperparam_value = None
         if classifier.hyperparam_name and classifier.values:
@@ -93,7 +89,6 @@ class MLBackend:
             classifier.model.set_params(
                 **{classifier.hyperparam_name: best_hyperparam_value}
             )
-
         classifier.model.fit(self.data.train.x, self.data.train.y)  # type: ignore
         return TrainingResult(
             classifier.model,
@@ -104,24 +99,20 @@ class MLBackend:
         )
 
     def train_classification(
-        self, classifier: ClassifierWithParams
+            self, classifier: ClassifierWithParams
     ) -> ClassificationResult:
         """
-        Train a classifier for classification task with a given hyperparameter.
+        Train the classifier and return the best performing model.
         Args:
-            classifier_hyper:
-            x_train:
-            y_train:
-            x_test:
-            y_test:
+            classifier: Classifier to train.
 
         Returns:
-
+            ClassificationResult: Best performing model of hyperparameter tuning.
         """
         training_result = self.train_w_best_hyperparam(classifier)
 
-        y_pred = training_result.model.predict(self.data.test.x)  # type: ignore
-        acc = accuracy_score(self.data.test.y, y_pred)
+        y_pred = training_result.model.predict(self.data.valid.x)  # type: ignore
+        acc = accuracy_score(self.data.valid.y, y_pred)
         print(
             f"Best Model for {training_result.model_name}"
             f"with {training_result.hyperparam_name}"
@@ -133,24 +124,17 @@ class MLBackend:
         output_dir = Path("results/trained_models")
         output_dir.mkdir(parents=True, exist_ok=True)
         model_file = (
-            output_dir
-            / f"{training_result.model_name}_model_{self.data.random_seed}.joblib"
+                output_dir
+                / f"{training_result.model_name}_model_{self.data.random_seed}.joblib"
         )
         joblib.dump(training_result.model, model_file, compress=False)
-        # return training_result.model, acc, model_file
         return ClassificationResult(training_result.model, float(acc), model_file)
 
     def classification_for_different_classifiers(self) -> ClassificationResult:
         """
-        Train different classifiers for classification task.
-        Args:
-            x_train:
-            y_train:
-            x_test:
-            y_test:
-
+        Train different classifiers and return the best performing model.
         Returns:
-            Path to best performed model and its accuracy score.
+            ClassificationResult: Best performing model of all classifiers.
         """
         classifiers = [
             ClassifierWithParams(

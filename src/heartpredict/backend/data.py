@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Self
 
 import joblib
 import numpy as np
@@ -11,66 +10,77 @@ from sklearn.preprocessing import StandardScaler
 
 
 @dataclass
-class NumpyMatrix: 
+class NumpyMatrix:
     x: np.ndarray
     y: np.ndarray
 
 
 class ProjectData:
     def __init__(self, csv: Path) -> None:
-        self.project_path = Path(__file__).parent.parent.parent.parent
-        self.df = pd.read_csv(self.project_path.joinpath(csv))
+        self.df = pd.read_csv("data/heart_failure_clinical_records.csv")
 
-
-    @classmethod    
+    @classmethod
     @lru_cache
     def build(
-        cls, csv: Path = Path("data/heart_failure_clinical_records.csv")
-        ) -> Self:
+            cls, csv: Path = Path("data/heart_failure_clinical_records.csv")
+    ):
         return cls(csv)
 
 
 class MLData:
     def __init__(
-        self, project_data: ProjectData, test_size: float, random_seed: int
+            self, project_data: ProjectData, test_size: float, random_seed: int
     ) -> None:
         self.project_data = project_data
         self.test_size = test_size
         self.random_seed = random_seed
-        self.raw = self._get_raw_matrix(project_data.df)
-        self.train, self.test = self._get_prepared_matrices()
+        self.dataset = self._get_whole_dataset(self.project_data.df)
+        self.train, self.valid = self._get_prepared_matrices()
 
     @classmethod
     @lru_cache
     def build(
-        cls, project_data: ProjectData, test_size: float = 0.2, random_seed: int = 42
-    ) -> Self:
+            cls, project_data: ProjectData, test_size: float = 0.2, random_seed: int = 42
+    ):
         return cls(project_data, test_size, random_seed)
 
-    def _get_raw_matrix(self, df: pd.DataFrame) -> NumpyMatrix:
-        x = df.drop(columns=["DEATH_EVENT"])
-        y = df["DEATH_EVENT"]
+    def _get_whole_dataset(self, df: pd.DataFrame) -> NumpyMatrix:
+        """
+        Prepare the whole dataset.
+        Args:
+            df:
 
-        return NumpyMatrix(x.values, y.values)  # type: ignore
+        Returns:
+
+        """
+        x = df.drop(columns=["DEATH_EVENT"]).values
+        y = df["DEATH_EVENT"].values
+
+        return NumpyMatrix(x, y)  # type: ignore
 
     def _get_prepared_matrices(self) -> tuple[NumpyMatrix, NumpyMatrix]:
-        unscaled_x_train, unscaled_x_test, y_train, y_test = train_test_split(
-            self.raw.x,
-            self.raw.y,
+        """
+        Prepare training and validation matrices.
+        Returns:
+
+        """
+        unscaled_x_train, unscaled_x_valid, y_train, y_valid = train_test_split(
+            self.dataset.x,
+            self.dataset.y,
             test_size=self.test_size,
             random_state=self.random_seed,
         )
-        x_train, x_test = self._scale_input_features(unscaled_x_test, unscaled_x_train)
-        return NumpyMatrix(x_train, y_train), NumpyMatrix(x_test, y_test)
+        x_train, x_valid = self._scale_input_features(unscaled_x_train, unscaled_x_valid)
+        return NumpyMatrix(x_train, y_train), NumpyMatrix(x_valid, y_valid)
 
     def _scale_input_features(
-        self, x_train: np.ndarray, x_test: np.ndarray
+            self, x_train: np.ndarray, x_valid: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
         """
-        Scale the input features.
+        Scale input features.
         Args:
             x_train:
-            x_test:
+            x_valid:
 
         Returns:
 
@@ -84,5 +94,5 @@ class MLData:
         scaler_file = output_dir / "used_scaler.joblib"
         joblib.dump(scaler, scaler_file, compress=False)
 
-        x_test = scaler.transform(x_test)  # type: ignore
-        return x_train, x_test
+        x_valid = scaler.transform(x_valid)  # type: ignore
+        return x_train, x_valid
