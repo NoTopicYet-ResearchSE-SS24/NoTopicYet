@@ -34,7 +34,8 @@ class MLData:
         self.project_data = project_data
         self.test_size = test_size
         self.random_seed = random_seed
-        self.dataset = self._get_whole_dataset(self.project_data.df)
+        self.dataset = self._get_whole_dataset()
+        self.scaled_feature_matrix = MLData._scale_input_features(self.dataset.x, None)[0]
         self.train, self.valid = self._get_prepared_matrices()
 
     @classmethod
@@ -45,17 +46,14 @@ class MLData:
     ):
         return cls(project_data, test_size, random_seed)
 
-    def _get_whole_dataset(self, df: pd.DataFrame) -> NumpyMatrix:
+    def _get_whole_dataset(self) -> NumpyMatrix:
         """
         Prepare the whole dataset.
-        Args:
-            df:
-
         Returns:
-
+            Whole dataset as NumpyMatrix.
         """
-        x = df.drop(columns=["DEATH_EVENT"]).values
-        y = df["DEATH_EVENT"].values
+        x = self.project_data.df.drop(columns=["DEATH_EVENT"]).values
+        y = self.project_data.df["DEATH_EVENT"].values
 
         return NumpyMatrix(x, y)  # type: ignore
 
@@ -63,7 +61,7 @@ class MLData:
         """
         Prepare training and validation matrices.
         Returns:
-
+            Training and validation matrices as NumpyMatrix.
         """
         unscaled_x_train, unscaled_x_valid, y_train, y_valid = train_test_split(
             self.dataset.x,
@@ -71,12 +69,13 @@ class MLData:
             test_size=self.test_size,
             random_state=self.random_seed,
         )
-        x_train, x_valid = self._scale_input_features(unscaled_x_train,
-                                                      unscaled_x_valid)
+        x_train, x_valid = MLData._scale_input_features(unscaled_x_train,
+                                                        unscaled_x_valid)
         return NumpyMatrix(x_train, y_train), NumpyMatrix(x_valid, y_valid)
 
+    @staticmethod
     def _scale_input_features(
-            self, x_train: np.ndarray, x_valid: np.ndarray
+            x_train: np.ndarray, x_valid: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
         """
         Scale input features.
@@ -85,7 +84,7 @@ class MLData:
             x_valid:
 
         Returns:
-
+            Scaled training and validation input features.
         """
         scaler = StandardScaler()
         x_train = scaler.fit_transform(x_train)
@@ -96,5 +95,6 @@ class MLData:
         scaler_file = output_dir / "used_scaler.joblib"
         joblib.dump(scaler, scaler_file, compress=False)
 
-        x_valid = scaler.transform(x_valid)  # type: ignore
+        if x_valid is not None:
+            x_valid = scaler.transform(x_valid)  # type: ignore
         return x_train, x_valid
