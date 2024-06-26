@@ -1,6 +1,8 @@
 """Utilities for conducting a descriptive data analysis"""
 
 import matplotlib.pyplot as plt
+import pandas as pd
+from dataclasses import dataclass
 
 MEANING_BINARY_COLUMNS = {
     "anaemia": {0: "No anaemia", 1: "anaemia"},
@@ -11,6 +13,32 @@ MEANING_BINARY_COLUMNS = {
     "DEATH_EVENT": {0: "Survived", 1: "Died"},
 }
 
+@dataclass
+class BasicStatistics:
+    name: str
+    minimum: float
+    maximum: float
+
+class DataFrameAnalyzer:
+    def __init__(self, df: pd.DataFrame) -> None:
+        self.df = df
+
+    def calculate_basic_statistics(self, column: str) -> BasicStatistics:
+        col_data = self.df[column]
+        min_val = col_data.min()
+        max_val = col_data.max()
+        
+        return BasicStatistics(name=column, minimum=min_val, maximum=max_val)
+
+path = "./data/heart_failure_clinical_records.csv"
+df = pd.read_csv(path)
+
+analyzer = DataFrameAnalyzer(df=df)
+stats = analyzer.calculate_basic_statistics(column="age")
+print(stats.name)
+
+
+######
 
 def calculate_basic_statistics(df, col: str):
     """
