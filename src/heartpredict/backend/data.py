@@ -16,8 +16,8 @@ class NumpyMatrix:
 
 
 class ProjectData:
-    def __init__(self, csv: Path) -> None:
-        self.df = pd.read_csv("data/heart_failure_clinical_records.csv")
+    def __init__(self, csv: Path = Path("data/heart_failure_clinical_records.csv")) -> None:
+        self.df = pd.read_csv(csv)
 
     @classmethod
     @lru_cache
