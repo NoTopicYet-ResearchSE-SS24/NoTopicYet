@@ -12,17 +12,26 @@ from sklearn.discriminant_analysis import (
     QuadraticDiscriminantAnalysis,
 )
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
+from sklearn.metrics import accuracy_score, root_mean_squared_error
 from sklearn.model_selection import cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 
 
 @dataclass
-class ClassifierWithParams:
+class EvaluationMetric:
+    name: str
+    function: Any
+    optimum: Any
+
+
+@dataclass
+class ModelWithParams:
     model: BaseEstimator
     hyperparam_name: str
-    values: range | None
+    values: Any
+    model_type: str
 
 
 @dataclass
@@ -35,9 +44,10 @@ class TrainingResult:
 
 
 @dataclass
-class ClassificationResult:
+class OptimalModel:
     model: BaseEstimator
-    accuracy: float
+    score_name: str
+    score: float
     model_file: Path
 
 
@@ -48,122 +58,197 @@ class MLBackend:
     ) -> None:
         self.data = data
 
-    def k_fold_cross_validation(
-            self, classifier: BaseEstimator, hyperparam_name: str, value: Any
+        self.max_tree_depth = self._calculate_max_tree_depth()
+        self.k_min = self._calculate_k_min()
+
+    def classification_for_different_classifiers(self) -> OptimalModel:
+        """
+        Train different classifiers and return the best performing model.
+        Returns:
+            OptimalModel: Best performing model of all classifiers.
+        """
+        classifiers = [
+            ModelWithParams(
+                DecisionTreeClassifier(random_state=self.data.random_seed),
+                "max_depth",
+                range(1, self.max_tree_depth),
+                "classifier"
+            ),
+            ModelWithParams(
+                RandomForestClassifier(random_state=self.data.random_seed),
+                "max_depth",
+                range(self.k_min, self.k_min + 10),
+                "classifier"
+            ),
+            ModelWithParams(KNeighborsClassifier(),
+                            "n_neighbors",
+                            range(3, 7),
+                            "classifier"),
+            ModelWithParams(LinearDiscriminantAnalysis(), "", None, "classifier"),
+            ModelWithParams(QuadraticDiscriminantAnalysis(), "", None, "classifier"),
+        ]
+
+        eval_metric = EvaluationMetric("Accuracy", accuracy_score, np.argmax)
+        return self._train_models(classifiers, eval_metric)
+
+    def regression_for_different_regressors(self) -> OptimalModel:
+        """
+        Perform regression with different regressors and
+        return the best performing model.
+        Returns:
+            OptimalModel: Best performing model of all regressors.
+        """
+        regressors = [
+            ModelWithParams(
+                LogisticRegression(random_state=self.data.random_seed),
+                "C",
+                np.arange(0.2, 2.2, 0.2),
+                "regressor"
+            ),
+            ModelWithParams(
+                LogisticRegressionCV(penalty="elasticnet",
+                                     solver="saga",
+                                     l1_ratios=np.arange(0.1, 1.1, 0.1),
+                                     random_state=self.data.random_seed),
+                "",
+                None,
+                "regressor"
+            ),
+        ]
+        eval_metric = EvaluationMetric(
+            "Root Mean Squared Error",
+            root_mean_squared_error,
+            np.argmin
+        )
+        return self._train_models(regressors, eval_metric)
+
+    def _k_fold_cross_validation(
+            self, model: BaseEstimator, hyperparam_name: str, value: Any
     ) -> Any:
         """
         Perform k-fold cross validation.
         Args:
-            classifier: Classifier to train.
+            model: Model to train.
             hyperparam_name: Hyperparameter name.
             value: Value of the hyperparameter.
 
         Returns:
-            Any: Mean accuracy score.
+            Mean accuracy of the model.
         """
         if hyperparam_name:
-            classifier.set_params(**{hyperparam_name: value})
-        accuracy = cross_val_score(classifier, self.data.train.x, self.data.train.y)
+            model.set_params(**{hyperparam_name: value})
+        accuracy = cross_val_score(model, self.data.train.x, self.data.train.y)
         return accuracy.mean()
 
-    def train_w_best_hyperparam(
-            self, classifier: ClassifierWithParams
-    ) -> TrainingResult:
+    def _train_w_best_hyperparam(self, model: ModelWithParams) -> TrainingResult:
         """
-        Train the classifier with the best hyperparameter value.
+        Train a model with the best hyperparameter.
         Args:
-            classifier: Classifier to train.
+            model: Model to train.
 
         Returns:
-            TrainingResult: Best model with hyperparameter tuning.
+            TrainingResult: Best performing model with the best hyperparameter.
         """
         best_hyperparam_value = None
-        if classifier.hyperparam_name and classifier.values:
-            accuracies = [
-                self.k_fold_cross_validation(
-                    classifier.model, classifier.hyperparam_name, value
+        if model.hyperparam_name and model.values is not None:
+            scores = [
+                self._k_fold_cross_validation(
+                    model.model, model.hyperparam_name, value
                 )
-                for value in classifier.values
+                for value in model.values
             ]
-            best_hyperparam_value = classifier.values[np.argmax(accuracies)]
-            classifier.model.set_params(
-                **{classifier.hyperparam_name: best_hyperparam_value}
+            best_hyperparam_value = model.values[np.argmax(scores)]
+            model.model.set_params(
+                **{model.hyperparam_name: best_hyperparam_value}
             )
-        classifier.model.fit(self.data.train.x, self.data.train.y)
+
+        model.model.fit(self.data.train.x, self.data.train.y)
         return TrainingResult(
-            classifier.model,
-            type(classifier.model).__name__,
-            classifier.model.classes_,  # type: ignore
-            classifier.hyperparam_name,
+            model.model,
+            type(model.model).__name__,
+            model.model.classes_,  # type: ignore
+            model.hyperparam_name,
             best_hyperparam_value,
         )
 
-    def train_classification(
-            self, classifier: ClassifierWithParams
-    ) -> ClassificationResult:
+    def _train_model(self, model: ModelWithParams, eval_metric) -> OptimalModel:
         """
-        Train the classifier and return the best performing model.
+        Train a model and return the best performing model.
         Args:
-            classifier: Classifier to train.
+            model: Model to train.
+            eval_metric: Evaluation metric to use for model selection.
 
         Returns:
-            ClassificationResult: Best performing model of hyperparameter tuning.
+            OptimalModel: Best performing model for different hyperparameters.
         """
-        training_result = self.train_w_best_hyperparam(classifier)
+        training_result = self._train_w_best_hyperparam(model)
 
         y_pred = training_result.model.predict(self.data.valid.x)  # type: ignore
-        acc = accuracy_score(self.data.valid.y, y_pred)
+        score = eval_metric.function(self.data.valid.y, y_pred)
         print(
             f"Best Model for {training_result.model_name}"
             f"with {training_result.hyperparam_name}"
             f"={training_result.best_hyperparam_value}, "
-            f"Classes: {training_result.model_classes}: Accuracy Score: {acc}"
+            f"Classes: {training_result.model_classes}: "
+            f"{eval_metric.name} Score: {score}"
         )
 
         # Save the trained model
-        output_dir = Path("results/trained_models")
+        output_dir = Path(f"results/trained_models/{model.model_type}")
         output_dir.mkdir(parents=True, exist_ok=True)
         model_file = (
                 output_dir
                 / f"{training_result.model_name}_model_{self.data.random_seed}.joblib"
         )
         joblib.dump(training_result.model, model_file, compress=False)
-        return ClassificationResult(training_result.model, float(acc), model_file)
+        return OptimalModel(
+            training_result.model,
+            eval_metric.name,
+            float(score),
+            model_file
+        )
 
-    def classification_for_different_classifiers(self) -> ClassificationResult:
+    def _train_models(self, models, eval_metric) -> OptimalModel:
         """
-        Train different classifiers and return the best performing model.
+        Train models and return the best performing model.
+        Args:
+            models: Different models to train.
+            eval_metric: Evaluation metric to use for model selection.
+
         Returns:
-            ClassificationResult: Best performing model of all classifiers.
+            TrainingResult: Best performing model of all models.
         """
-        classifiers = [
-            ClassifierWithParams(
-                DecisionTreeClassifier(random_state=self.data.random_seed),
-                "max_depth",
-                range(1, 12),
-            ),
-            ClassifierWithParams(
-                RandomForestClassifier(random_state=self.data.random_seed),
-                "max_depth",
-                range(1, 12),
-            ),
-            ClassifierWithParams(KNeighborsClassifier(), "n_neighbors", range(3, 7)),
-            ClassifierWithParams(LinearDiscriminantAnalysis(), "", None),
-            ClassifierWithParams(QuadraticDiscriminantAnalysis(), "", None),
-        ]
+        training_results = [self._train_model(m, eval_metric) for m in models]
 
-        # TODO: Use different / combined evaluation metrics
-        # TODO: Evaluation based only based on accuracy score leads to overfitting.
-        training_results = [self.train_classification(c) for c in classifiers]
-
-        accuracy_scores = [res.accuracy for res in training_results]
-        best_performance = np.argmax(accuracy_scores)
+        scores = [res.score for res in training_results]
+        best_performance = eval_metric.optimum(scores)
         print(
             f"Best Model: {type(training_results[best_performance].model).__name__}"
-            "with Accuracy Score: "
-            f"{training_results[best_performance].accuracy}"
+            f"with {eval_metric.name}: "
+            f"{training_results[best_performance].score}"
         )
         return training_results[best_performance]
+
+    def _calculate_max_tree_depth(self):
+        """
+        Calculate the maximum tree depth for decision tree and random forest.
+        Early stopping prevents overfitting.
+
+        Returns:
+            Maximum tree depth.
+        """
+        return int(np.log2(self.data.train.x.shape[1])) + 1
+
+    def _calculate_k_min(self):
+        """
+        Calculate the minimum number of neighbors for KNN.
+        Square root of the number of samples is a good
+        starting point for practical applications.
+
+        Returns:
+            Minimum number of neighbors.
+        """
+        return int(np.sqrt(self.data.train.x.shape[0]))
 
 
 def load_model(model_file) -> Any:
@@ -180,4 +265,12 @@ def load_model(model_file) -> Any:
 
 @lru_cache(typed=True)
 def get_ml_backend(ml_data: MLData) -> MLBackend:
+    """
+    Get the MLBackend instance.
+    Args:
+        ml_data:
+
+    Returns:
+        MLBackend instance.
+    """
     return MLBackend(ml_data)
