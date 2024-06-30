@@ -5,7 +5,8 @@ import pandas as pd
 from data import ProjectData
 from dataclasses import dataclass
 
-PATH = "data/heart_failure_clinical_records.csv"
+heart_predict_path = "data/heart_failure_clinical_records.csv"
+heart_predict_data = ProjectData(heart_predict_path).df
 
 MEANING_BINARY_COLUMNS = {
     "anaemia": {0: "No anaemia", 1: "anaemia"},
@@ -34,7 +35,7 @@ class BooleanStatistics:
 
 class DataFrameAnalyzer:
     def __init__(self, 
-                 df: pd.DataFrame = ProjectData(PATH).df) -> None:
+                 df: pd.DataFrame = heart_predict_data) -> None:
         self.df = df
 
     def calculate_boolean_statistics(self, boolean_column: str) -> BooleanStatistics:
